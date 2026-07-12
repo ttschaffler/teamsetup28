@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Impact Assessment — Team Input</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <div class="brand">ADIDAS AG · SOURCING &amp; LOGISTICS IT</div>
+      <div class="apptitle">AI IMPACT ASSESSMENT — TEAM INPUT</div>
+    </div>
+    <div class="topbar-controls">
+      <label class="team-label" for="teamSelect">TEAM</label>
+      <select id="teamSelect" aria-label="Select team"></select>
+      <button id="btnSave" class="btn">Save</button>
+      <button id="btnSend" class="btn btn-blue">Send to Claude</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="toolrow">
+    <button id="btnExample" class="btn btn-ghost">Load example (Logistics)</button>
+    <button id="btnExport" class="btn btn-ghost">Export JSON</button>
+    <button id="btnImport" class="btn btn-ghost">Import JSON</button>
+    <input type="file" id="fileImport" accept=".json" hidden>
+    <span id="saveStatus" class="save-status" role="status"></span>
+  </div>
+
+  <!-- 01 BASELINE -->
+  <section class="card" id="sec-baseline">
+    <div class="card-head"><span class="numtag">01</span><h2>Baseline — who we are today</h2></div>
+    <div class="card-body grid-2">
+      <div class="field">
+        <label for="fteInternal">FTE internal</label>
+        <input type="number" id="fteInternal" min="0" step="0.5" data-path="baseline.fteInternal">
+      </div>
+      <div class="field">
+        <label for="fteExternal">FTE external</label>
+        <input type="number" id="fteExternal" min="0" step="0.5" data-path="baseline.fteExternal">
+      </div>
+      <div class="field span-2">
+        <label for="systems">Systems owned (custom-built vs. SaaS)</label>
+        <input type="text" id="systems" data-path="baseline.systems" placeholder="e.g. Manhattan WMS/TMS, Infor Nexus, custom track &amp; trace">
+      </div>
+      <div class="field span-2">
+        <label for="aiToday">AI in real daily use today — honest picture, no marketing</label>
+        <input type="text" id="aiToday" data-path="baseline.aiToday" placeholder="e.g. coding assistant in dev, none in operations">
+      </div>
+    </div>
+  </section>
+
+  <!-- 02+03+04 CAPABILITIES -->
+  <section class="card" id="sec-capabilities">
+    <div class="card-head"><span class="numtag">02</span><h2>Capabilities — facts &amp; automation assumptions</h2></div>
+    <div class="card-body">
+      <p class="hint">4–6 capabilities, %FTE must total 100%. AI TODAY = real daily operation. ASSUMED 2028 = realistic level at AI-First ambition; tick * if the vendor (Infor / SAP) caps it. BY &gt;2028 = beyond horizon. DEMAND Δ = rough volume change by 2028 in %.</p>
+      <div class="table-scroll">
+        <table id="capTable">
+          <thead>
+            <tr>
+              <th class="col-name">Capability</th>
+              <th>% FTE</th>
+              <th>AI today</th>
+              <th>Assumed 2028</th>
+              <th>*</th>
+              <th>By</th>
+              <th>Demand Δ%</th>
+              <th class="col-constraint">Key constraint</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="table-foot">
+        <button class="btn btn-ghost" id="btnAddCap">+ Add capability</button>
+        <span id="pctSum" class="pct-sum"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 SKILLSETS -->
+  <section class="card" id="sec-skillsets">
+    <div class="card-head"><span class="numtag">03</span><h2>Skillset depth needed — BASE vs AI-FIRST 2028</h2></div>
+    <div class="card-body">
+      <div class="table-scroll">
+        <table id="skillTable">
+          <thead>
+            <tr><th class="col-name">Skillset</th><th class="col-desc">What it covers</th><th>BASE</th><th>AI-FIRST</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 PEOPLE -->
+  <section class="card" id="sec-people">
+    <div class="card-head"><span class="numtag">04</span><h2>People sheet — one row per internal</h2></div>
+    <div class="card-body">
+      <p class="hint care">HANDLE WITH CARE — development-oriented, not a rating. Use role labels or initials, never full names. Visible to team lead, department head and HR only; alignment with HR and works council before anything reaches the person.</p>
+      <div class="table-scroll">
+        <table id="peopleTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="col-role">Current role</th>
+              <th class="col-skills">Core skills today</th>
+              <th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>S5</th>
+              <th>AI adopt.</th>
+              <th>Appetite</th>
+              <th class="col-dir">Dev direction (lead's view)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="table-foot">
+        <button class="btn btn-ghost" id="btnAddPerson">+ Add internal</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 FREE TEXT -->
+  <section class="card" id="sec-freetext">
+    <div class="card-head"><span class="numtag">05</span><h2>Free text</h2></div>
+    <div class="card-body grid-1">
+      <div class="field">
+        <label for="ftOpportunity">Biggest AI opportunity</label>
+        <textarea id="ftOpportunity" rows="2" data-path="freetext.opportunity"></textarea>
+      </div>
+      <div class="field">
+        <label for="ftRisk">Biggest risk</label>
+        <textarea id="ftRisk" rows="2" data-path="freetext.risk"></textarea>
+      </div>
+      <div class="field">
+        <label for="ftDecision">The one decision you need from leadership</label>
+        <textarea id="ftDecision" rows="2" data-path="freetext.decision"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="card" id="sec-settings">
+    <div class="card-head"><span class="numtag">·</span><h2>Connection</h2></div>
+    <div class="card-body grid-2">
+      <div class="field span-2">
+        <label for="apiKey">Anthropic API key — stored only in this browser (localStorage), sent only to api.anthropic.com</label>
+        <input type="password" id="apiKey" autocomplete="off" placeholder="sk-ant-…">
+      </div>
+    </div>
+  </section>
+
+  <!-- OUTPUT -->
+  <section class="card card-dark" id="sec-output" hidden>
+    <div class="card-head dark"><span class="numtag inv">→</span><h2>Recommendation</h2>
+      <button class="btn btn-ghost-inv" id="btnDownloadMd">Download .md</button>
+    </div>
+    <div class="card-body">
+      <div id="output" class="output" aria-live="polite"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast" class="toast" role="alert" hidden></div>
+
+<footer class="foot">
+  Input stays in this browser until you press “Send to Claude”. Derivation logic: Gartner IT 2030 — FTE 2028 = baseline × demand Δ × automation effect + supervision &amp; governance work.
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
