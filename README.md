@@ -58,6 +58,26 @@ The app is served at **https://ttschaffler.github.io/teamsetup28/** after
 > host it on Enterprise Pages, an internal web server, or just share the
 > folder and open `index.html` locally.
 
+## Shared storage — GitHub repo as the database
+
+Local **Save** only persists in each lead's browser. For a view shared across
+all team leads, the app can write to a GitHub repo via the Contents API —
+one file per team at `data/<team>.json`, every change git-versioned.
+
+Setup (once):
+
+1. Create a **private** repo, e.g. `ttschaffler/teamsetup28-data`
+   (private, because the people sheets land in it).
+2. Create a fine-grained token: Repository access → *Only select
+   repositories* → the data repo; Permissions → **Contents: Read and write**.
+3. Distribute repo name + token to the team leads → they enter both in the
+   app's **Connection** section.
+
+Then **Save to shared** pushes the current team's input, **Load from shared**
+pulls it, and the toolbar shows which teams have saved. Conflicts are handled
+last-write-wins with one sha-refresh retry. To review everything centrally,
+open the data repo — the JSON files and their full change history are there.
+
 ## Data & privacy
 
 - No server, no database: input lives in each team lead's browser until they

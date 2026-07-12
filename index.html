@@ -30,7 +30,10 @@
     <button id="btnExport" class="btn btn-ghost">Export JSON</button>
     <button id="btnImport" class="btn btn-ghost">Import JSON</button>
     <input type="file" id="fileImport" accept=".json" hidden>
+    <button id="btnSaveShared" class="btn btn-ghost">Save to shared</button>
+    <button id="btnLoadShared" class="btn btn-ghost">Load from shared</button>
     <span id="saveStatus" class="save-status" role="status"></span>
+    <span id="sharedStatus" class="save-status" role="status"></span>
   </div>
 
   <!-- 01 BASELINE -->
@@ -156,6 +159,15 @@
         <label for="apiKey">Anthropic API key — stored only in this browser (localStorage), sent only to api.anthropic.com</label>
         <input type="password" id="apiKey" autocomplete="off" placeholder="sk-ant-…">
       </div>
+      <div class="field">
+        <label for="ghRepo">Shared data repo (GitHub, owner/repo — use a PRIVATE repo)</label>
+        <input type="text" id="ghRepo" autocomplete="off" placeholder="ttschaffler/teamsetup28-data">
+      </div>
+      <div class="field">
+        <label for="ghToken">GitHub token — fine-grained, scoped to the data repo, Contents: read &amp; write</label>
+        <input type="password" id="ghToken" autocomplete="off" placeholder="github_pat_…">
+      </div>
+      <p class="hint span-2">Shared storage writes one JSON file per team to <code>data/&lt;team&gt;.json</code> in the data repo. Everyone with the token sees all teams — including the people sheets. Keep the data repo private.</p>
     </div>
   </section>
 

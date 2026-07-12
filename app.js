@@ -207,6 +207,8 @@ document.addEventListener("input", (e) => {
     persist(true); return;
   }
   if (t.id === "apiKey") localStorage.setItem(KEY_STORE, t.value.trim());
+  if (t.id === "ghRepo") { localStorage.setItem(GH_REPO_STORE, t.value.trim()); }
+  if (t.id === "ghToken") { localStorage.setItem(GH_TOKEN_STORE, t.value.trim()); refreshSharedStatus(); }
 });
 
 document.addEventListener("click", (e) => {
@@ -259,6 +261,106 @@ function download(blob, name) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+/* ---------- shared storage (GitHub repo as database) ---------- */
+const GH_REPO_STORE = "aiimpact:ghrepo";
+const GH_TOKEN_STORE = "aiimpact:ghtoken";
+const GH_DEFAULT_REPO = "ttschaffler/teamsetup28-data";
+
+function ghCfg() {
+  return {
+    repo: (localStorage.getItem(GH_REPO_STORE) || GH_DEFAULT_REPO).trim(),
+    token: (localStorage.getItem(GH_TOKEN_STORE) || "").trim()
+  };
+}
+function ghHeaders(token) {
+  return { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json", "Content-Type": "application/json" };
+}
+function dataPath(team) { return "data/" + team.toLowerCase() + ".json"; }
+function b64encodeUtf8(str) { return btoa(unescape(encodeURIComponent(str))); }
+function b64decodeUtf8(b64) { return decodeURIComponent(escape(atob(b64.replace(/\n/g, "")))); }
+
+async function ghGetFile(team) {
+  const { repo, token } = ghCfg();
+  const res = await fetch("https://api.github.com/repos/" + repo + "/contents/" + dataPath(team), { headers: ghHeaders(token) });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("GitHub read " + res.status + " — check repo name and token scope");
+  const file = await res.json();
+  return { sha: file.sha, data: JSON.parse(b64decodeUtf8(file.content)) };
+}
+
+async function ghPutFile(team, obj) {
+  const { repo, token } = ghCfg();
+  const put = async (sha) => fetch("https://api.github.com/repos/" + repo + "/contents/" + dataPath(team), {
+    method: "PUT",
+    headers: ghHeaders(token),
+    body: JSON.stringify({
+      message: "assessment input — " + team + " (" + new Date().toISOString() + ")",
+      content: b64encodeUtf8(JSON.stringify(obj, null, 2)),
+      sha: sha || undefined
+    })
+  });
+  const existing = await ghGetFile(team).catch(() => null);
+  let res = await put(existing && existing.sha);
+  if (res.status === 409 || res.status === 422) {           // someone saved in between — refetch sha, retry once
+    const fresh = await ghGetFile(team).catch(() => null);
+    res = await put(fresh && fresh.sha);
+  }
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error("GitHub write " + res.status + " — " + body.slice(0, 160));
+  }
+}
+
+async function ghListTeams() {
+  const { repo, token } = ghCfg();
+  if (!token) return null;
+  const res = await fetch("https://api.github.com/repos/" + repo + "/contents/data", { headers: ghHeaders(token) });
+  if (res.status === 404) return [];
+  if (!res.ok) return null;
+  const files = await res.json();
+  return files.filter(f => f.name.endsWith(".json")).map(f => f.name.replace(".json", ""));
+}
+
+async function refreshSharedStatus() {
+  const el = $("#sharedStatus");
+  try {
+    const teams = await ghListTeams();
+    if (teams === null) { el.textContent = ""; return; }
+    el.textContent = "Shared: " + (teams.length ? teams.join(" · ") : "no team saved yet");
+  } catch (e) { el.textContent = ""; }
+}
+
+async function saveShared() {
+  if (!ghCfg().token) { toast("GitHub token missing (Connection section)", true); return; }
+  const btn = $("#btnSaveShared");
+  btn.disabled = true;
+  try {
+    persist(true);
+    await ghPutFile(state.team, state);
+    toast("Saved to shared — " + state.team);
+    refreshSharedStatus();
+  } catch (e) { toast(e.message, true); }
+  finally { btn.disabled = false; }
+}
+
+async function loadShared() {
+  if (!ghCfg().token) { toast("GitHub token missing (Connection section)", true); return; }
+  const btn = $("#btnLoadShared");
+  btn.disabled = true;
+  try {
+    const file = await ghGetFile(state.team);
+    if (!file) { toast("No shared data for " + state.team + " yet", true); return; }
+    file.data.team = state.team;
+    state = file.data;
+    renderAll(); persist(true);
+    toast("Loaded from shared — " + state.team);
+  } catch (e) { toast(e.message, true); }
+  finally { btn.disabled = false; }
+}
+
+$("#btnSaveShared").addEventListener("click", saveShared);
+$("#btnLoadShared").addEventListener("click", loadShared);
 
 /* ---------- send to Claude ---------- */
 function validate() {
@@ -399,4 +501,7 @@ function setSaveStatus(msg) { $("#saveStatus").textContent = msg; }
 
 /* ---------- init ---------- */
 $("#apiKey").value = localStorage.getItem(KEY_STORE) || "";
+$("#ghRepo").value = localStorage.getItem(GH_REPO_STORE) || GH_DEFAULT_REPO;
+$("#ghToken").value = localStorage.getItem(GH_TOKEN_STORE) || "";
 loadTeam(TEAMS[0]);
+refreshSharedStatus();
